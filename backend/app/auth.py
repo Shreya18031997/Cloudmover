@@ -21,7 +21,10 @@ def login_via_google():
     auth_url, _ = flow.authorization_url(prompt='consent')
     return RedirectResponse(auth_url)
 
-
 @router.get("/auth/callback")
 def google_callback(request: Request):
     return {"message": "Google login successful! (you'll process tokens here later)"}
+
+
+
+
