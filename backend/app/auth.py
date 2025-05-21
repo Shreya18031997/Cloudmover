@@ -24,3 +24,20 @@ def login_via_google():
 @router.get("/auth/callback")
 def google_callback(request: Request):
     return HTMLResponse(content="<h1>✅ Login Successful!</h1><p>You can now access your Drive files.</p>")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
