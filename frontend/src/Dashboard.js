@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import styles from './Dashboard.module.css';
 
 function Dashboard() {
   const [files, setFiles] = useState([]);
@@ -8,6 +9,8 @@ function Dashboard() {
   const [folders, setFolders] = useState([]);
   const [selectedFolder, setSelectedFolder] = useState('');
   const [deleteAfterTransfer, setDeleteAfterTransfer] = useState(false);
+  const [selectedFileIds, setSelectedFileIds] = useState([]);
+  const [fileTypeFilter, setFileTypeFilter] = useState('All');
 
   const fetchFolders = async () => {
     try {
@@ -56,56 +59,98 @@ function Dashboard() {
     window.location.href = 'http://localhost:8000/auth/destination';
   };
 
-  const transferFile = async (fileId) => {
-    try {
-      const res = await fetch(
-        `http://localhost:8000/transfer-file?file_id=${fileId}&folder_id=${selectedFolder}&delete_source=${deleteAfterTransfer}`,
-        { method: 'POST' }
-      );
-      const data = await res.json();
-      alert(data.message || 'Transfer failed.');
-      window.location.reload(); // refresh list
-    } catch (err) {
-      console.error('Transfer failed:', err);
-      alert('Transfer failed.');
-    }
+  const toggleFileSelection = (fileId) => {
+    setSelectedFileIds((prev) =>
+      prev.includes(fileId) ? prev.filter((id) => id !== fileId) : [...prev, fileId]
+    );
   };
 
+  const selectAllFiles = () => {
+    setSelectedFileIds(filteredFiles.map((file) => file.id));
+  };
+
+  const clearSelection = () => {
+    setSelectedFileIds([]);
+  };
+
+  const transferSelectedFiles = async () => {
+    if (!selectedFileIds.length) {
+      alert('No files selected.');
+      return;
+    }
+
+    for (const fileId of selectedFileIds) {
+      try {
+        const res = await fetch(
+          `http://localhost:8000/transfer-file?file_id=${fileId}&folder_id=${selectedFolder}&delete_source=${deleteAfterTransfer}`,
+          { method: 'POST' }
+        );
+        const data = await res.json();
+        console.log(`✅ ${fileId}: ${data.message}`);
+      } catch (err) {
+        console.error(`❌ Failed to transfer ${fileId}:`, err);
+      }
+    }
+
+    alert(`✅ Transferred ${selectedFileIds.length} file(s).`);
+    window.location.reload();
+  };
+
+  const getFileCategory = (mimeType) => {
+    if (mimeType.startsWith('image/')) return 'Images';
+    if (mimeType.startsWith('video/')) return 'Videos';
+    if (mimeType === 'application/pdf') return 'PDFs';
+    if (
+      mimeType.includes('word') ||
+      mimeType.includes('document') ||
+      mimeType.includes('sheet') ||
+      mimeType.includes('presentation')
+    )
+      return 'Documents';
+    return 'Others';
+  };
+
+  const filteredFiles =
+    fileTypeFilter === 'All'
+      ? files
+      : files.filter((file) => getFileCategory(file.mimeType) === fileTypeFilter);
+
   return (
-    <div className="min-h-screen bg-blue-50 p-6 font-sans">
-      <header className="flex flex-col md:flex-row items-center justify-between mb-6 border-b pb-4 border-blue-200">
+    <div className={styles.container}>
+      <header className={styles.header}>
         <div>
-          <h1 className="text-3xl font-bold text-blue-900 flex items-center gap-2">
-            📁 CloudMover <span className="text-blue-600">Dashboard</span>
+          <h1 className={styles.title}>
+            📁 CloudMover <span style={{ color: '#005c99' }}>Dashboard</span>
           </h1>
-          <p className="text-sm text-blue-700 mt-1">
-            Effortlessly move files between Google Drive accounts 🌐
+          <p className={styles.subtitle}>
+            Effortlessly move your files between Google Drive accounts 🌐
           </p>
         </div>
-        <div className="mt-4 md:mt-0 flex gap-3">
-          <button
-            onClick={connectSource}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-          >
-            🔗 Connect Source
+
+        <div>
+          <button onClick={connectSource} className={styles.button}>
+            🔗 Connect Source Drive
           </button>
           <button
             onClick={connectDestination}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+            className={`${styles.button} ${styles.buttonGreen}`}
           >
-            📥 Connect Destination
+            📥 Connect Destination Drive
           </button>
         </div>
       </header>
 
       {destinationConnected && folders.length > 0 && (
-        <div className="mb-6 space-y-3">
-          <div>
-            <label className="text-blue-800 font-medium mr-2">Choose folder:</label>
+        <>
+          <div className={styles.dropdown}>
+            <label htmlFor="folderSelect" style={{ marginRight: 8 }}>
+              Choose destination folder:
+            </label>
             <select
+              id="folderSelect"
               value={selectedFolder}
               onChange={(e) => setSelectedFolder(e.target.value)}
-              className="border rounded px-3 py-2"
+              style={{ padding: '6px', borderRadius: '4px' }}
             >
               {folders.map((folder) => (
                 <option key={folder.id} value={folder.id}>
@@ -114,52 +159,88 @@ function Dashboard() {
               ))}
             </select>
           </div>
-          <label className="flex items-center text-sm text-blue-900">
-            <input
-              type="checkbox"
-              className="mr-2"
-              checked={deleteAfterTransfer}
-              onChange={(e) => setDeleteAfterTransfer(e.target.checked)}
-            />
-            Delete source file after transfer
-          </label>
-        </div>
+
+          <div className={styles.checkbox}>
+            <label>
+              <input
+                type="checkbox"
+                checked={deleteAfterTransfer}
+                onChange={(e) => setDeleteAfterTransfer(e.target.checked)}
+                style={{ marginRight: 8 }}
+              />
+              Delete source file after transfer
+            </label>
+          </div>
+        </>
       )}
 
       {loading ? (
-        <p className="text-blue-800">🔄 Loading source files...</p>
+        <p>🔄 Loading source files...</p>
       ) : !sourceConnected ? (
-        <p className="text-red-600">❌ Source account not connected.</p>
+        <p>❌ Source account not connected.</p>
       ) : (
-        <div>
-          <h2 className="text-xl font-semibold text-blue-900 mb-3">📂 Files in Source Drive</h2>
-          {files.length === 0 ? (
-            <p className="text-blue-700">No files found.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {files.map((file) => (
-                <div
-                  key={file.id}
-                  className="bg-white shadow-md rounded p-4 flex flex-col justify-between"
-                >
-                  <div>
-                    <h3 className="text-blue-900 font-bold">{file.name}</h3>
-                    <p className="text-sm text-blue-600">{file.mimeType}</p>
-                    <p className="text-sm text-gray-500">{file.size || 0} bytes</p>
-                  </div>
-                  {destinationConnected && (
-                    <button
-                      onClick={() => transferFile(file.id)}
-                      className="mt-3 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
-                    >
-                      Transfer
-                    </button>
-                  )}
-                </div>
-              ))}
+        <section>
+          <h2 style={{ color: '#003366' }}>📂 Files in Source Drive</h2>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ marginRight: 8 }}>Filter by Type:</label>
+            {['All', 'Images', 'Documents', 'PDFs', 'Videos', 'Others'].map((type) => (
+              <button
+                key={type}
+                onClick={() => setFileTypeFilter(type)}
+                className={styles.button}
+                style={{
+                  backgroundColor: fileTypeFilter === type ? '#0f9d58' : '#4285f4',
+                  marginRight: 6,
+                }}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+
+          {selectedFileIds.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <button onClick={clearSelection} className={styles.button}>
+                Clear Selection ({selectedFileIds.length})
+              </button>
+              <button
+                onClick={transferSelectedFiles}
+                className={`${styles.button} ${styles.buttonGreen}`}
+              >
+                Transfer Selected Files
+              </button>
             </div>
           )}
-        </div>
+
+          {filteredFiles.length > 0 && selectedFileIds.length === 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <button onClick={selectAllFiles} className={styles.button}>
+                Select All
+              </button>
+            </div>
+          )}
+
+          {filteredFiles.length === 0 ? (
+            <p>No files found for this filter.</p>
+          ) : (
+            <ul className={styles.fileList}>
+              {filteredFiles.map((file) => (
+                <li key={file.id} className={styles.fileItem}>
+                  <div>
+                    <input
+                      type="checkbox"
+                      checked={selectedFileIds.includes(file.id)}
+                      onChange={() => toggleFileSelection(file.id)}
+                      style={{ marginRight: 10 }}
+                    />
+                    <strong>{file.name}</strong> ({file.mimeType}, {file.size || 0} bytes)
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       )}
     </div>
   );
