@@ -1,11 +1,14 @@
-// frontend/src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Dashboard from './Dashboard';
+import Dashboard from './Dashboard'; // ⬅️ this pulls in your dashboard file
 
 function App() {
-  const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:8000/auth/google';
+  const connectSource = () => {
+    window.location.href = 'http://localhost:8000/auth/source';
+  };
+
+  const connectDestination = () => {
+    window.location.href = 'http://localhost:8000/auth/destination';
   };
 
   return (
@@ -15,25 +18,19 @@ function App() {
           path="/"
           element={
             <div style={{ padding: 40, fontFamily: 'sans-serif' }}>
-              <h1>📁 Connect your Google Drive</h1>
-              <p>Connect your Google Drive account to manage files.</p>
-              <button
-                onClick={handleGoogleLogin}
-                style={{
-                  backgroundColor: '#4285F4',
-                  color: 'white',
-                  padding: '12px 20px',
-                  border: 'none',
-                  borderRadius: 6,
-                  fontSize: 16,
-                  cursor: 'pointer',
-                }}
-              >
-                Connect Google Drive
+              <h1>🔗 Connect Two Google Drives</h1>
+              <p>Use the buttons below to connect both your source and destination Drive accounts.</p>
+              <button onClick={connectSource} style={{ marginRight: 16 }}>
+                Connect Source Drive
+              </button>
+              <button onClick={connectDestination}>
+                Connect Destination Drive
               </button>
             </div>
           }
         />
+
+        {/* ✅ This renders Dashboard.js when the user visits /dashboard */}
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
