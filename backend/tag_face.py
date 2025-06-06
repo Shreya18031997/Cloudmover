@@ -34,3 +34,4 @@ def save_face_encoding(image_path, label):
 # 🧪 Run the function
 if __name__ == "__main__":
     save_face_encoding("obama.jpg", "Obama")
+

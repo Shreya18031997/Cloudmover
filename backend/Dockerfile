@@ -1,5 +1,6 @@
 FROM python:3.10-slim
 
+# Install system dependencies required by dlib, face_recognition, OpenCV, FastAPI
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -11,10 +12,26 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
+# Upgrade pip
 RUN pip install --upgrade pip
-RUN pip install face_recognition opencv-python flask
 
+# Install all required Python packages
+RUN pip install \
+    face_recognition \
+    opencv-python \
+    fastapi \
+    uvicorn \
+    python-multipart \
+    google-auth-oauthlib \
+    google-api-python-client \
+    requests
+
+# Set working directory inside container
 WORKDIR /app
+
+# Copy all files into the container
 COPY . /app
 
-CMD ["bash"]
+# Run FastAPI server on container startup
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+

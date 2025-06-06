@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Dashboard from './Dashboard'; // ⬅️ this pulls in your dashboard file
+import Dashboard from './Dashboard';
+import FaceMatcher from './FaceMatcher';
 
 function App() {
   const connectSource = () => {
@@ -14,6 +15,7 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* ✅ Homepage with Drive connection buttons */}
         <Route
           path="/"
           element={
@@ -30,8 +32,11 @@ function App() {
           }
         />
 
-        {/* ✅ This renders Dashboard.js when the user visits /dashboard */}
+        {/* ✅ Dashboard view */}
         <Route path="/dashboard" element={<Dashboard />} />
+
+        {/* ✅ Face matching/upload view */}
+        <Route path="/match" element={<FaceMatcher />} />
       </Routes>
     </Router>
   );
