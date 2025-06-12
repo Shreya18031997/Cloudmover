@@ -244,3 +244,4 @@ def search_images(name: str):
 
     matches = [r["filename"] for r in records if r["matched_name"].lower() == name.lower()]
     return {"images": matches}
+
